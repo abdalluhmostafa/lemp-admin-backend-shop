@@ -19,6 +19,12 @@ sudo npm install pm2 -g
 mkdir /var/www/$APP_USER
 sudo useradd $APP_USER
 
+# Download the project
+cd /var/www/
+wget https://filebin.net/9uyn1ya0hdzidps0/project.tar.gz
+tar -xvf project.tar.gz
+mv project.tar.gz $APP_USER
+
 chown $APP_USER.$APP_USER /var/www/$APP_USER  -R
 
 ## Backend Nginx config
@@ -111,7 +117,7 @@ server {
 server {
 
     server_name  	admin.$DOMAIN_NAME;
-    root         /var/www/$APP_USER/admin/public;
+    root         /var/www/$APP_USER/admin/build;
     access_log /var/log/nginx/admin-$APP_USER-access.log;
     error_log /var/log/nginx/admin-$APP_USER-error.log;
     index index.php index.html index.htm;
@@ -320,11 +326,6 @@ rm -rf x
 #### 
 
 
-# Install supervisoer 
-sudo apt update && sudo apt install supervisor -y
-
-
-
 # Install Php 8.2
 sudo apt install software-properties-common -y
 
@@ -408,3 +409,42 @@ mysql -u root -e "GRANT ALL PRIVILEGES ON \`${APP_USER}_db\`.* TO '${APP_USER}_u
 mysql -u root -e "FLUSH PRIVILEGES;"
 
 echo "DB-Name: ${APP_USER}_db, DB-User: ${APP_USER}_user, DB-Pass: $DB_PASS"
+
+# ## Edit the backend .env
+
+# cd /var/www/$APP_USER/backend
+
+# sed -i '/^APP_URL/d' .env
+# sed -i "1iAPP_URL=$DOMAIN_NAME" .env
+# sed -i "s/^DB_DATABASE=uzmart/DB_DATABASE=\${APP_USER}_db/" .env
+# sed -i "s/^DB_USERNAME=root/DB_USERNAME=\${APP_USER}_user/" .env
+# sed -i "s/^DB_PASSWORD=/DB_PASSWORD=$DB_PASS/" .env
+
+# composer install and php artisan install:project
+
+# composer install
+
+# php artisan key:generate
+
+# touch config/init.php
+
+# echo " You need to add lisence keys here config/credential.php"
+
+# php artisan migrate
+
+# php artisan db:seed
+
+# chmod -R 775 storage
+
+# php artisan storage:link
+
+# php artisan optimize:clear
+
+
+# ## Admin
+
+# cd /var/www/$APP_USER/admin/src/configs
+
+# sed -i "s#export const BASE_URL = 'https://api.uzmart.org';#export const BASE_URL = 'https://backend.$DOMAIN_NAME';#" app-global.js
+# sed -i "s#export const WEBSITE_URL = 'https://uzmart.org';#export const WEBSITE_URL = 'https://admin.$DOMAIN_NAME';#" app-global.js
+
