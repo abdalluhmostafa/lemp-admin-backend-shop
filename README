@@ -1,0 +1,67 @@
+## Install Backend
+
+```
+cd /var/www/$APP_USER/backend
+sed -i '/^APP_URL/d' .env
+sed -i "1iAPP_URL=$DOMAIN_NAME" .env
+sed -i "s/^DB_DATABASE=uzmart/DB_DATABASE=\${APP_USER}_db/" .env
+sed -i "s/^DB_USERNAME=root/DB_USERNAME=\${APP_USER}_user/" .env
+sed -i "s/^DB_PASSWORD=/DB_PASSWORD=$DB_PASS/" .env
+
+su $APP_USER
+
+composer install
+
+php artisan migrate
+ 
+php artisan db:seed
+ 
+##php artisan key:generate
+
+touch config/init.php
+
+echo " You need to add lisence keys here config/credential.php"
+
+chmod -R 775 storage
+
+php artisan storage:link
+
+php artisan optimize:clear
+
+```
+
+## Install Admin
+
+```
+
+cd /var/www/$APP_USER/admin/src/configs
+
+sed -i "s#export const BASE_URL = 'https://api.uzmart.org';#export const BASE_URL = 'https://backend.$DOMAIN_NAME';#" app-global.js
+sed -i "s#export const WEBSITE_URL = 'https://uzmart.org';#export const WEBSITE_URL = 'https://admin.$DOMAIN_NAME';#" app-global.js
+
+yarn
+
+yarn build
+
+```
+
+## Install Shop
+
+cd /var/www/$APP_USER/shop/.env
+
+NEXT_PUBLIC_BASE_URL=https://api.uzmart.org/api/ --> NEXT_PUBLIC_BASE_URL=https://backend.$DOMAIN_NAME/api/
+NEXT_PUBLIC_ADMIN_PANEL_URL=https://admin.uzmart.org --> NEXT_PUBLIC_ADMIN_PANEL_URL=https://admin.$DOMAIN_NAME
+NEXT_PUBLIC_WEBSITE_URL=https://uzmart.org --> NEXT_PUBLIC_WEBSITE_URL=https://shop.$DOMAIN_NAME
+
+
+```
+sed -i "s#NEXT_PUBLIC_BASE_URL=https://api.uzmart.org/api/#NEXT_PUBLIC_BASE_URL=https://backend.$DOMAIN_NAME/api/#" .env
+sed -i "s#NEXT_PUBLIC_ADMIN_PANEL_URL=https://admin.uzmart.org#NEXT_PUBLIC_ADMIN_PANEL_URL=https://admin.$DOMAIN_NAME#" .env
+sed -i "s#NEXT_PUBLIC_WEBSITE_URL=https://uzmart.org#NEXT_PUBLIC_WEBSITE_URL=https://shop.$DOMAIN_NAME#" .env
+```
+
+yarn
+
+yarn build
+
+pm2 start "npm run start"
