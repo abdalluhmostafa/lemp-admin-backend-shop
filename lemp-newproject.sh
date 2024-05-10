@@ -15,15 +15,13 @@ sudo npm i -g yarn
 sudo apt install zip unzip -y
 sudo npm install pm2 -g
 
-
-mkdir /var/www/$APP_USER
 sudo useradd $APP_USER
 
 # Download the project
 cd /var/www/
 wget https://filebin.net/9uyn1ya0hdzidps0/project.tar.gz
 tar -xvf project.tar.gz
-mv project.tar.gz $APP_USER
+mv project $APP_USER
 
 chown $APP_USER.$APP_USER /var/www/$APP_USER  -R
 
