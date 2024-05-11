@@ -74,3 +74,4 @@ yarn
 yarn build
 
 pm2 --name shop-rest start yarn -- run start
+### pm2 --name shop-rest start yarn -- run start --port 3000 (make sure to change this port in Nginx)
