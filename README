@@ -1,9 +1,13 @@
 ## Install Backend
 
 ```
+APP_USER=
+DOMAIN_NAME=
+DB_PASS=
+
 cd /var/www/$APP_USER/backend
 sed -i '/^APP_URL/d' .env
-sed -i "1iAPP_URL=https://$DOMAIN_NAME" .env
+sed -i "1iAPP_URL=https://backend.$DOMAIN_NAME" .env
 sed -i "s/DB_DATABASE=uzmart/DB_DATABASE=${APP_USER}_db/" .env
 sed -i "s/DB_USERNAME=root/DB_USERNAME=${APP_USER}_user/" .env
 sed -i "s/DB_PASSWORD=/DB_PASSWORD=$DB_PASS/" .env
