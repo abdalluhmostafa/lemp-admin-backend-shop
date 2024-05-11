@@ -19,11 +19,16 @@ sudo useradd $APP_USER
 
 # Download the project
 cd /var/www/
-wget https://filebin.net/9uyn1ya0hdzidps0/project.tar.gz
+wget https://filebin.net/umroh7tt2413w0dt/project.zip
 tar -xvf project.tar.gz
 mv project $APP_USER
-
+rm -rf project.tar.gz
 chown $APP_USER.$APP_USER /var/www/$APP_USER  -R
+
+mkdir /home/$APP_USER
+
+chown $APP_USER.$APP_USER /home/$APP_USER -R
+
 
 ## Backend Nginx config
 cat > /etc/nginx/sites-available/backend.$DOMAIN_NAME <<EOF
@@ -324,18 +329,18 @@ rm -rf x
 #### 
 
 
-# Install Php 8.2
+# Install Php 8.1
 sudo apt install software-properties-common -y
 
 sudo add-apt-repository ppa:ondrej/php
 
-sudo apt install --no-install-recommends php8.2 -y
+sudo apt install --no-install-recommends php8.1 -y
 
 
-sudo apt install php8.2-mbstring php8.2-xml php8.2-bcmath php8.2-simplexml php8.2-intl php8.2-gd php8.2-curl php8.2-zip php8.2-gmp composer php8.2-fpm php8.2-mysql -y
+sudo apt install php8.1-mbstring php8.1-xml php8.1-bcmath php8.1-simplexml php8.1-intl php8.1-gd php8.1-curl php8.1-zip php8.1-gmp composer php8.1-fpm php8.1-mysql -y
 
 
-cd /etc/php/8.2/fpm/pool.d/
+cd /etc/php/8.1/fpm/pool.d/
 
 cp www.conf phpmyadmin.conf
 
@@ -357,8 +362,8 @@ sed -i "s/user = www-data/user = $APP_USER/g" $APP_USER.conf
 sed -i "s/group = www-data/group = $APP_USER/g" $APP_USER.conf
 
 
-systemctl restart php8.2-fpm.service
-systemctl enable php8.2-fpm.service
+systemctl restart php8.1-fpm.service
+systemctl enable php8.1-fpm.service
 
 
 ## Install PHP Composer
