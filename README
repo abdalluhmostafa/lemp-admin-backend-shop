@@ -21,6 +21,7 @@ php artisan db:seed
 touch config/init.php
 
 echo " You need to add lisence keys here config/credential.php"
+# vim config/credential.php
 
 chmod -R 775 storage
 
@@ -40,9 +41,12 @@ sed -i "s#export const BASE_URL = 'https://api.uzmart.org';#export const BASE_UR
 sed -i "s#export const WEBSITE_URL = 'https://uzmart.org';#export const WEBSITE_URL = 'https://admin.$DOMAIN_NAME';#" app-global.js
 
 cd /var/www/$APP_USER/admin/ 
+yarn add node-sass
 yarn
+# npm rebuild node-sass
 
 yarn build
+# OR --> npm install --force
 
 ```
 
@@ -65,4 +69,4 @@ yarn
 
 yarn build
 
-pm2 start "npm run start"
+pm2 --name shop-rest start yarn -- run start
