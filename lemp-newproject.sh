@@ -13,6 +13,7 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 sudo npm i -g yarn
 sudo apt install zip unzip -y
+sudo npm install -g npm@10.7.0
 sudo npm install pm2 -g
 
 sudo useradd $APP_USER
@@ -63,7 +64,7 @@ set_real_ip_from 103.21.244.0/22;
 set_real_ip_from 103.22.200.0/22;
 set_real_ip_from 103.31.4.0/22;
 set_real_ip_from 104.16.0.0/12;
-set_real_ip_from 108.262.192.0/18;
+set_real_ip_from 108.162.192.0/18;
 set_real_ip_from 131.0.72.0/22;
 set_real_ip_from 141.101.64.0/18;
 set_real_ip_from 162.158.0.0/15;
@@ -117,8 +118,6 @@ cat > /etc/nginx/sites-available/admin.$DOMAIN_NAME <<EOF
 
 server {
 
-server {
-
     server_name  	admin.$DOMAIN_NAME;
     root         /var/www/$APP_USER/admin/build;
     access_log /var/log/nginx/admin-$APP_USER-access.log;
@@ -149,7 +148,7 @@ set_real_ip_from 103.21.244.0/22;
 set_real_ip_from 103.22.200.0/22;
 set_real_ip_from 103.31.4.0/22;
 set_real_ip_from 104.16.0.0/12;
-set_real_ip_from 108.262.192.0/18;
+set_real_ip_from 108.162.192.0/18;
 set_real_ip_from 131.0.72.0/22;
 set_real_ip_from 141.101.64.0/18;
 set_real_ip_from 162.158.0.0/15;
