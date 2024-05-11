@@ -20,9 +20,9 @@ sudo useradd $APP_USER
 # Download the project
 cd /var/www/
 wget https://filebin.net/umroh7tt2413w0dt/project.zip
-tar -xvf project.tar.gz
+tar -xvf project.zip
 mv project $APP_USER
-rm -rf project.tar.gz
+rm -rf project.zip
 chown $APP_USER.$APP_USER /var/www/$APP_USER  -R
 
 mkdir /home/$APP_USER
