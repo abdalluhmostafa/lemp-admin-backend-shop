@@ -20,7 +20,7 @@ sudo useradd $APP_USER
 # Download the project
 cd /var/www/
 wget https://filebin.net/umroh7tt2413w0dt/project.zip
-tar -xvf project.zip
+unzip project.zip
 mv project $APP_USER
 rm -rf project.zip
 chown $APP_USER.$APP_USER /var/www/$APP_USER  -R
@@ -369,11 +369,13 @@ systemctl enable php8.1-fpm.service
 ## Install PHP Composer
 
 cd /tmp
-php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-php -r "if (hash_file('sha384', 'composer-setup.php') === 'e21205b207c3ff031906575712edab6f13eb0b361f2085f1f1237b7126d785e826a450292b6cfd1d64d92e6563bbde02') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-php composer-setup.php
-php -r "unlink('composer-setup.php');"
+# php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+# php -r "if (hash_file('sha384', 'composer-setup.php') === 'e21205b207c3ff031906575712edab6f13eb0b361f2085f1f1237b7126d785e826a450292b6cfd1d64d92e6563bbde02') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+# php composer-setup.php
+# php -r "unlink('composer-setup.php');"
+curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
 
+composer --version
 
 
 
