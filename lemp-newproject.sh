@@ -14,6 +14,7 @@ sudo apt install -y nodejs
 sudo npm i -g yarn
 sudo apt install zip unzip -y
 sudo npm install -g npm@10.7.0
+sudo npm rebuild node-sass
 sudo npm install pm2 -g
 
 sudo useradd $APP_USER
