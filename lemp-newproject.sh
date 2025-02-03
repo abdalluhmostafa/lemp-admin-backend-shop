@@ -21,13 +21,20 @@ sudo useradd $APP_USER
 
 # Download the project
 cd /var/www/
-wget https://filebin.net/umroh7tt2413w0dt/project.zip
-unzip project.zip
-mv project $APP_USER
-rm -rf project.zip
+mkdir $APP_USER
+mkdir -p /var/www/$APP_USER/backend
+mkdir -p /var/www/$APP_USER/admin
+mkdir -p /var/www/$APP_USER/shop
+
 chown $APP_USER.$APP_USER /var/www/$APP_USER  -R
 
 mkdir /home/$APP_USER
+
+mkdir /home/$APP_USER/.ssh
+
+chmod 700 /home/$APP_USER/.ssh
+
+touch /home/$APP_USER/.ssh/authorized_keys
 
 chown $APP_USER.$APP_USER /home/$APP_USER -R
 
