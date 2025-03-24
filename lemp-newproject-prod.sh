@@ -242,13 +242,13 @@ set_real_ip_from 2a06:98c0::/29;
 EOF
 
 ## shop Nginx config
-cat > /etc/nginx/sites-available/shop.$DOMAIN_NAME <<EOF
+cat > /etc/nginx/sites-available/$DOMAIN_NAME <<EOF
 
 server {
         index index.html index.htm;
-        server_name shop.$DOMAIN_NAME;
-        access_log /var/log/nginx/shop-$DOMAIN_NAME-access.log;
-        error_log /var/log/nginx/shop-$DOMAIN_NAME-error.log;
+        server_name $DOMAIN_NAME;
+        access_log /var/log/nginx/$DOMAIN_NAME-access.log;
+        error_log /var/log/nginx/$DOMAIN_NAME-error.log;
 location / {
   proxy_pass http://localhost:3000;
   proxy_http_version 1.1;
@@ -307,7 +307,7 @@ ln -s /etc/nginx/sites-available/phpmyadmin /etc/nginx/sites-enabled/
 
 ln -s /etc/nginx/sites-available/backend.$DOMAIN_NAME /etc/nginx/sites-enabled/
 ln -s /etc/nginx/sites-available/admin.$DOMAIN_NAME /etc/nginx/sites-enabled/
-ln -s /etc/nginx/sites-available/shop.$DOMAIN_NAME /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/$DOMAIN_NAME /etc/nginx/sites-enabled/
 
 
 rm -rf  /etc/nginx/sites-available/default 
