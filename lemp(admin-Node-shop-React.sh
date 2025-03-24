@@ -318,7 +318,7 @@ echo "listen = 127.0.0.1:9002" >> phpmyadmin.conf
 
 sed -i '4s/www/phpmyadmin/' phpmyadmin.conf
 
-mv www.conf $APP_USER.conf
+cp www.conf $APP_USER.conf
 
 sed -i '/\/run\/php\/php8.1-fpm.sock/d' $APP_USER.conf
 
