@@ -10,18 +10,24 @@ sudo useradd $APP_USER
 
 # Download the project
 cd /var/www/
-wget https://filebin.net/umroh7tt2413w0dt/project.zip
-unzip project.zip
-mv project $APP_USER
-rm -rf project.zip
+mkdir $APP_USER
+mkdir -p /var/www/$APP_USER/backend
+mkdir -p /var/www/$APP_USER/frontend
+
 chown $APP_USER.$APP_USER /var/www/$APP_USER  -R
 
 mkdir /home/$APP_USER
 
+mkdir /home/$APP_USER/.ssh
+
+chmod 700 /home/$APP_USER/.ssh
+
+touch /home/$APP_USER/.ssh/authorized_keys
+
 chown $APP_USER.$APP_USER /home/$APP_USER -R
 
 
-## Backend Nginx config
+## Backend Nginx config - php
 cat > /etc/nginx/sites-available/backend.$DOMAIN_NAME <<EOF
 
 server {
@@ -103,15 +109,15 @@ set_real_ip_from 2a06:98c0::/29;
 
 EOF
 
-## Admin Nginx config
-cat > /etc/nginx/sites-available/admin.$DOMAIN_NAME <<EOF
+## Frontend Nginx config - react
+cat > /etc/nginx/sites-available/frontend.$DOMAIN_NAME <<EOF
 
 server {
 
-    server_name  	admin.$DOMAIN_NAME;
-    root         /var/www/$APP_USER/admin/build;
-    access_log /var/log/nginx/admin-$APP_USER-access.log;
-    error_log /var/log/nginx/admin-$APP_USER-error.log;
+    server_name  	frontend.$DOMAIN_NAME;
+    root         /var/www/$APP_USER/frontend/build;
+    access_log /var/log/nginx/frontend-$APP_USER-access.log;
+    error_log /var/log/nginx/frontend-$APP_USER-error.log;
     index index.php index.html index.htm;
     try_files \$uri \$uri/ \$uri/index.html =404;
 
@@ -172,15 +178,6 @@ set_real_ip_from 2a06:98c0::/29;
                 autoindex off;
 	}
 
-
-#     location /admin{
-#   proxy_pass http://localhost:3000;
-#   proxy_http_version 1.1;
-#   proxy_set_header Upgrade \$http_upgrade;
-#   proxy_set_header Connection 'upgrade';
-#   proxy_set_header Host \$host;
-#   proxy_cache_bypass \$http_upgrade;
-#     }
 #########
         location ~ \.php$ {
 
@@ -223,40 +220,10 @@ set_real_ip_from 2a06:98c0::/29;
 
 EOF
 
-## shop Nginx config
-cat > /etc/nginx/sites-available/shop.$DOMAIN_NAME <<EOF
-
-server {
-        index index.html index.htm;
-        server_name shop.$DOMAIN_NAME;
-        access_log /var/log/nginx/shop-$DOMAIN_NAME-access.log;
-        error_log /var/log/nginx/shop-$DOMAIN_NAME-error.log;
-location / {
-  proxy_pass http://localhost:3000;
-  proxy_http_version 1.1;
-  proxy_set_header Upgrade \$http_upgrade;
-  proxy_set_header Connection 'upgrade';
-  proxy_set_header Host \$host;
-  proxy_cache_bypass \$http_upgrade;
-}
-location ~ /\.ht {
-    deny all;
-}
-
-
-
-    listen 80;
-
-}
-
-
-EOF
-
-
 
 ln -s /etc/nginx/sites-available/backend.$DOMAIN_NAME /etc/nginx/sites-enabled/
-ln -s /etc/nginx/sites-available/admin.$DOMAIN_NAME /etc/nginx/sites-enabled/
-ln -s /etc/nginx/sites-available/shop.$DOMAIN_NAME /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/frontend.$DOMAIN_NAME /etc/nginx/sites-enabled/
+
 
 nginx -t
 
@@ -281,8 +248,6 @@ sed -i "s/group = www-data/group = $APP_USER/g" $APP_USER.conf
 
 systemctl restart php8.1-fpm.service
 systemctl enable php8.1-fpm.service
-
-
 
 
 #### mysql 8
