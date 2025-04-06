@@ -230,7 +230,7 @@ nginx -t
 #### 
 
 
-#  Php 8.1
+#  Php 8.2
 
 cd /etc/php/8.2/fpm/pool.d/
 
