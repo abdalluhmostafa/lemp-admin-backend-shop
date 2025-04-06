@@ -232,11 +232,11 @@ nginx -t
 
 #  Php 8.1
 
-cd /etc/php/8.1/fpm/pool.d/
+cd /etc/php/8.2/fpm/pool.d/
 
 cp www.conf $APP_USER.conf
 
-sed -i '/\/run\/php\/php8.1-fpm.sock/d' $APP_USER.conf
+sed -i '/\/run\/php\/php8.2-fpm.sock/d' $APP_USER.conf
 
 echo "listen = 127.0.0.1:$PHPFPM_PORT" >> $APP_USER.conf
 
@@ -246,8 +246,8 @@ sed -i "s/user = www-data/user = $APP_USER/g" $APP_USER.conf
 sed -i "s/group = www-data/group = $APP_USER/g" $APP_USER.conf
 
 
-systemctl restart php8.1-fpm.service
-systemctl enable php8.1-fpm.service
+systemctl restart php8.2-fpm.service
+systemctl enable php8.2-fpm.service
 
 
 #### mysql 8
