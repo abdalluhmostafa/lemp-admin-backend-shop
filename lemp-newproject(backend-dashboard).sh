@@ -1,0 +1,249 @@
+#!/bin/bash
+DOMAIN_NAME=$1
+APP_USER=$2
+
+# Node + mongo _ saldwich
+hostnamectl set-hostname $APP_USER
+sudo apt update -y
+sudo apt install nginx -y 
+sudo systemctl enable nginx
+sudo systemctl start nginx
+sudo systemctl status nginx
+sudo apt install certbot python3-certbot-nginx htop nload net-tools vim git curl -y
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+sudo npm i -g yarn
+sudo apt install zip unzip -y
+sudo npm install -g npm@10.7.0
+sudo npm rebuild node-sass
+sudo npm install pm2 -g
+
+sudo useradd $APP_USER
+
+# Download the project
+cd /var/www/
+mkdir $APP_USER
+mkdir -p /var/www/$APP_USER/backend
+mkdir -p /var/www/$APP_USER/admin
+mkdir -p /var/www/$APP_USER/shop
+
+chown $APP_USER.$APP_USER /var/www/$APP_USER  -R
+
+mkdir /home/$APP_USER
+
+mkdir /home/$APP_USER/.ssh
+
+chmod 700 /home/$APP_USER/.ssh
+
+touch /home/$APP_USER/.ssh/authorized_keys
+
+chown $APP_USER.$APP_USER /home/$APP_USER -R
+
+
+## Backend Nginx config
+cat > /etc/nginx/sites-available/backend.$DOMAIN_NAME <<EOF
+
+server {
+        index index.html index.htm;
+        server_name backend.$DOMAIN_NAME;
+        access_log /var/log/nginx/backend-$DOMAIN_NAME-access.log;
+        error_log /var/log/nginx/backend-$DOMAIN_NAME-error.log;
+location / {
+  proxy_pass http://localhost:3000;
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade \$http_upgrade;
+  proxy_set_header Connection 'upgrade';
+  proxy_set_header Host \$host;
+  proxy_cache_bypass \$http_upgrade;
+}
+location ~ /\.ht {
+    deny all;
+}
+
+
+
+    listen 80;
+
+}
+
+EOF
+
+## Dashboard Nginx config
+cat > /etc/nginx/sites-available/dashboard.$DOMAIN_NAME <<EOF
+
+server {
+        index index.html index.htm;
+        server_name dashboard.$DOMAIN_NAME;
+        access_log /var/log/nginx/dashboard-$DOMAIN_NAME-access.log;
+        error_log /var/log/nginx/dashboard-$DOMAIN_NAME-error.log;
+location / {
+  proxy_pass http://localhost:3001;
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade \$http_upgrade;
+  proxy_set_header Connection 'upgrade';
+  proxy_set_header Host \$host;
+  proxy_cache_bypass \$http_upgrade;
+}
+location ~ /\.ht {
+    deny all;
+}
+
+
+
+    listen 80;
+
+}
+
+
+EOF
+
+# Phpmyadmin Nginx configration
+cat > /etc/nginx/sites-available/phpmyadmin <<EOF
+
+server {
+        server_name phpmyadmin.$DOMAIN_NAME;
+
+               access_log /var/log/nginx/phpmyadmin-access.log;
+               error_log /var/log/nginx/phpmyadmin-error.log;
+
+        index index.php index.html;
+        root /var/www/phpmyadmin/;
+
+        location / {
+                try_files \$uri \$uri/ /index.php?q=\$uri&\$args;
+        }
+        location ~ \.php$ {
+                fastcgi_split_path_info ^(.+\.php)(/.*)$;
+                fastcgi_index index.php;
+                fastcgi_pass 127.0.0.1:9002;
+                include fastcgi_params;
+                fastcgi_param PATH_INFO \$fastcgi_path_info;
+                fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        }
+
+
+    listen 80;
+
+
+}
+
+EOF
+
+
+ln -s /etc/nginx/sites-available/phpmyadmin /etc/nginx/sites-enabled/
+
+ln -s /etc/nginx/sites-available/backend.$DOMAIN_NAME /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/dashboard.$DOMAIN_NAME /etc/nginx/sites-enabled/
+
+
+rm -rf  /etc/nginx/sites-available/default 
+rm -rf /etc/nginx/sites-enabled/default 
+
+nginx -t
+
+## Install PhpMyAdmin
+
+cd /var/www/
+wget https://files.phpmyadmin.net/phpMyAdmin/5.1.2/phpMyAdmin-5.1.2-all-languages.tar.gz
+tar xvf phpMyAdmin-5.1.2-all-languages.tar.gz
+mv phpMyAdmin-5.1.2-all-languages/ phpmyadmin
+mkdir -p /var/lib/phpmyadmin/tmp
+chown -R www-data:www-data /var/lib/phpmyadmin
+cp /var/www/phpmyadmin/config.sample.inc.php /var/www/phpmyadmin/config.inc.php
+apt install pwgen -y
+pwgen -s 32 1 > x
+secret=$(cat x)
+sed -i '/blowfish_secret/d' /var/www/phpmyadmin/config.inc.php
+echo "\$cfg['blowfish_secret'] = '$secret';" >> /var/www/phpmyadmin/config.inc.php
+echo "\$cfg['TempDir'] = '/var/lib/phpmyadmin/tmp';" >> /var/www/phpmyadmin/config.inc.php
+chown www-data.www-data /var/www/phpmyadmin/ -R
+rm -rf x
+
+#### 
+
+
+# Install Php 8.1
+sudo apt install software-properties-common -y
+
+sudo add-apt-repository ppa:ondrej/php
+
+sudo apt install --no-install-recommends php8.1 -y
+
+
+sudo apt install php8.1-mbstring php8.1-xml php8.1-bcmath php8.1-simplexml php8.1-intl php8.1-gd php8.1-curl php8.1-zip php8.1-gmp composer php8.1-fpm php8.1-mysql -y
+
+
+cd /etc/php/8.1/fpm/pool.d/
+
+cp www.conf phpmyadmin.conf
+
+sed -i '/\/run\/php\/php8.1-fpm.sock/d' phpmyadmin.conf
+
+echo "listen = 127.0.0.1:9002" >> phpmyadmin.conf
+
+sed -i '4s/www/phpmyadmin/' phpmyadmin.conf
+
+cp www.conf $APP_USER.conf
+
+sed -i '/\/run\/php\/php8.1-fpm.sock/d' $APP_USER.conf
+
+echo "listen = 127.0.0.1:9001" >> $APP_USER.conf
+
+sed -i "4s/www/$APP_USER/" $APP_USER.conf
+
+sed -i "s/user = www-data/user = $APP_USER/g" $APP_USER.conf
+sed -i "s/group = www-data/group = $APP_USER/g" $APP_USER.conf
+
+
+systemctl restart php8.1-fpm.service
+systemctl enable php8.1-fpm.service
+
+
+## Install PHP Composer
+
+cd /tmp
+# php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+# php -r "if (hash_file('sha384', 'composer-setup.php') === 'e21205b207c3ff031906575712edab6f13eb0b361f2085f1f1237b7126d785e826a450292b6cfd1d64d92e6563bbde02') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+# php composer-setup.php
+# php -r "unlink('composer-setup.php');"
+curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
+
+composer --version
+
+
+
+#### Install mysql 8
+
+
+# wget https://dev.mysql.com/get/mysql-apt-config_0.8.19-1_all.deb
+
+# sudo dpkg -i mysql-apt-config_0.8.19-1_all.deb
+
+#sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 467B942D3A79BD29
+#sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys B7B3B788A8D3785C 
+
+
+# sudo apt update -y 
+
+# sudo apt install -y mysql-server mysql-client
+
+
+# mysql –V
+
+
+# sudo systemctl start mysql
+
+# sudo systemctl enable mysql
+
+
+# DB_PASS=$(openssl rand -base64 12)
+
+# mysql -u root -e "CREATE DATABASE \`${APP_USER}_db\`;"
+
+# mysql -u root -e "CREATE USER '${APP_USER}_user'@'%' IDENTIFIED BY '$DB_PASS';"
+
+# mysql -u root -e "GRANT ALL PRIVILEGES ON \`${APP_USER}_db\`.* TO '${APP_USER}_user'@'%';"
+
+# mysql -u root -e "FLUSH PRIVILEGES;"
+
+# echo "DB-Name: ${APP_USER}_db, DB-User: ${APP_USER}_user, DB-Pass: $DB_PASS"
