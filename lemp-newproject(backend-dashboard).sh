@@ -24,8 +24,7 @@ sudo useradd $APP_USER
 cd /var/www/
 mkdir $APP_USER
 mkdir -p /var/www/$APP_USER/backend
-mkdir -p /var/www/$APP_USER/admin
-mkdir -p /var/www/$APP_USER/shop
+mkdir -p /var/www/$APP_USER/dashboard
 
 chown $APP_USER.$APP_USER /var/www/$APP_USER  -R
 
