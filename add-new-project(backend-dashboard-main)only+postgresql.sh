@@ -2,6 +2,21 @@
 DOMAIN_NAME=$1
 APP_USER=$2
 
+hostnamectl set-hostname $APP_USER
+sudo apt update -y
+sudo apt install nginx -y 
+sudo systemctl enable nginx
+sudo systemctl start nginx
+sudo systemctl status nginx
+sudo apt install certbot python3-certbot-nginx htop nload net-tools vim git curl -y
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+sudo npm i -g yarn
+sudo apt install zip unzip -y
+sudo npm install -g npm@10.7.0
+sudo npm rebuild node-sass
+sudo npm install pm2 -g
+
 # Generate a random password
 DB_PASSWORD=$(openssl rand -base64 16)
 DB_USERNAME="${APP_USER}_user"
@@ -15,6 +30,10 @@ sudo useradd $APP_USER -s /bin/bash
 cd /var/www/
 
 mkdir $APP_USER
+mkdir -p /var/www/$APP_USER/backend
+mkdir -p /var/www/$APP_USER/dashboard
+mkdir -p /var/www/$APP_USER/shop
+
 chown $APP_USER.$APP_USER /var/www/$APP_USER -R
 
 mkdir -p /home/$APP_USER/.ssh
@@ -33,6 +52,29 @@ chown $APP_USER.$APP_USER /home/$APP_USER -R
 sudo -u postgres psql -c "CREATE USER \"$DB_USERNAME\" WITH PASSWORD '$DB_PASSWORD';"
 sudo -u postgres psql -c "CREATE DATABASE \"$DB_DATABASE\";"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE \"$DB_DATABASE\" TO \"$DB_USERNAME\";"
+
+# Main - shop
+cat > /etc/nginx/sites-available/$DOMAIN_NAME <<EOF
+server {
+        index index.html index.htm;
+        server_name $DOMAIN_NAME;
+        access_log /var/log/nginx/$DOMAIN_NAME-access.log;
+        error_log /var/log/nginx/$DOMAIN_NAME-error.log;
+location / {
+  proxy_pass http://localhost:3000;
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade \$http_upgrade;
+  proxy_set_header Connection 'upgrade';
+  proxy_set_header Host \$host;
+  proxy_cache_bypass \$http_upgrade;
+}
+location ~ /\.ht {
+    deny all;
+}
+
+    listen 80;
+}
+EOF
 
 ## Backend Nginx config - NodeJS
 cat > /etc/nginx/sites-available/backend.$DOMAIN_NAME <<EOF
@@ -57,13 +99,13 @@ location ~ /\.ht {
 }
 EOF
 
-## Admin Nginx config - NodeJS
-cat > /etc/nginx/sites-available/admin.$DOMAIN_NAME <<EOF
+## dashboard Nginx config - NodeJS
+cat > /etc/nginx/sites-available/dashboard.$DOMAIN_NAME <<EOF
 server {
         index index.html index.htm;
-        server_name admin.$DOMAIN_NAME;
-        access_log /var/log/nginx/admin-$DOMAIN_NAME-access.log;
-        error_log /var/log/nginx/admin-$DOMAIN_NAME-error.log;
+        server_name dashboard.$DOMAIN_NAME;
+        access_log /var/log/nginx/dashboard-$DOMAIN_NAME-access.log;
+        error_log /var/log/nginx/dashboard-$DOMAIN_NAME-error.log;
 location / {
   proxy_pass http://localhost:3001;
   proxy_http_version 1.1;
@@ -80,16 +122,12 @@ location ~ /\.ht {
 }
 EOF
 
+ln -s /etc/nginx/sites-available/$DOMAIN_NAME /etc/nginx/sites-enabled/
 ln -s /etc/nginx/sites-available/backend.$DOMAIN_NAME /etc/nginx/sites-enabled/
-ln -s /etc/nginx/sites-available/admin.$DOMAIN_NAME /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/dashboard.$DOMAIN_NAME /etc/nginx/sites-enabled/
 
 nginx -t
 
-# Create output directories
-mkdir -p /var/www/$APP_USER/backend
-mkdir -p /var/www/$APP_USER/admin
-chown $APP_USER.$APP_USER /var/www/$APP_USER/backend -R
-chown $APP_USER.$APP_USER /var/www/$APP_USER/admin -R
 
 # Get the server IP address
 SERVER_IP=$(hostname -I | awk '{print $1}')
@@ -121,14 +159,27 @@ pm2 --name $APP_USER-backend start yarn -- run start --port 3000
 Notes: 
 - NodeJS + Postgresql
 /******************************************
-    Admin
+    Dashboard
 *****************************************/
 
-URL: https://admin.$DOMAIN_NAME
+URL: https://dashboard.$DOMAIN_NAME
 
-Root directory: /var/www/$APP_USER/admin
+Root directory: /var/www/$APP_USER/dashboard
 
-pm2 --name $APP_USER-admin start yarn -- run start --port 3001
+pm2 --name $APP_USER-dashboard start yarn -- run start --port 3001
+
+Notes: 
+- NodeJS
+
+/******************************************
+    Main - shop
+*****************************************/
+
+URL: https://$DOMAIN_NAME
+
+Root directory: /var/www/$APP_USER/shop
+
+pm2 --name $APP_USER-shop start yarn -- run start --port 3001
 
 Notes: 
 - NodeJS
