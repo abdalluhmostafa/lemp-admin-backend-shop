@@ -137,12 +137,10 @@ Notes:
 
 URL: https://dashboard.$DOMAIN_NAME
 
-Root directory: /var/www/$APP_USER/dashboard
-
-pm2 --name $APP_USER-dashboard start yarn -- run start --port 3001
+Root directory: /var/www/$APP_USER/dashboard/build
 
 Notes: 
-- NodeJS
+- React
 
 /******************************************
     Python app
