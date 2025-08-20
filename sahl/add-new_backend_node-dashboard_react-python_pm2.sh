@@ -149,7 +149,7 @@ Notes:
 *****************************************/
 
 
-Root directory: /var/www/$APP_USER/pythob
+Root directory: /var/www/$APP_USER/python
 
 pm2 --name $APP_USER-python start yarn -- run start --port 3001
 
