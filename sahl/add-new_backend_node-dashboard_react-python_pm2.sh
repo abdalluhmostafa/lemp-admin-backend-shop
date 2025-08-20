@@ -1,6 +1,7 @@
 #!/bin/bash
 DOMAIN_NAME=$1
 APP_USER=$2
+PHPFPM_PORT=$3
 
 # Backend - nodejs without db
 # Dashboard - React 
@@ -106,6 +107,25 @@ ln -s /etc/nginx/sites-available/backend.$DOMAIN_NAME /etc/nginx/sites-enabled/
 ln -s /etc/nginx/sites-available/dashboard.$DOMAIN_NAME /etc/nginx/sites-enabled/
 
 nginx -t
+
+#  Php 8.1
+
+cd /etc/php/8.1/fpm/pool.d/
+
+cp www.conf $APP_USER.conf
+
+sed -i '/\/run\/php\/php8.1-fpm.sock/d' $APP_USER.conf
+
+echo "listen = 127.0.0.1:$PHPFPM_PORT" >> $APP_USER.conf
+
+sed -i "4s/www/$APP_USER/" $APP_USER.conf
+
+sed -i "s/user = www-data/user = $APP_USER/g" $APP_USER.conf
+sed -i "s/group = www-data/group = $APP_USER/g" $APP_USER.conf
+
+
+systemctl restart php8.1-fpm.service
+systemctl enable php8.1-fpm.service
 
 # Get the server IP address
 SERVER_IP=$(hostname -I | awk '{print $1}')
