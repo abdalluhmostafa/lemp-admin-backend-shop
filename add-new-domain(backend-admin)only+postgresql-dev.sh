@@ -15,7 +15,7 @@ sudo useradd $APP_USER -s /bin/bash
 cd /var/www/
 
 mkdir $APP_USER
-chown $APP_USER.$APP_USER /var/www/$APP_USER -R
+chown $APP_USER:$APP_USER /var/www/$APP_USER -R
 
 mkdir -p /home/$APP_USER/.ssh
 chmod 700 /home/$APP_USER/.ssh
@@ -26,7 +26,7 @@ ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAxDUBpZVovZtajELVoGUNm1ZIwN53tvSgoJtcNVv+ewRi
 EOF
 
 chmod 600 /home/$APP_USER/.ssh/authorized_keys
-chown $APP_USER.$APP_USER /home/$APP_USER -R
+chown $APP_USER:$APP_USER /home/$APP_USER -R
 
 # Create PostgreSQL user and database
 # Use proper quotes for PostgreSQL compatibility
@@ -88,8 +88,8 @@ nginx -t
 # Create output directories
 mkdir -p /var/www/$APP_USER/backend
 mkdir -p /var/www/$APP_USER/admin
-chown $APP_USER.$APP_USER /var/www/$APP_USER/backend -R
-chown $APP_USER.$APP_USER /var/www/$APP_USER/admin -R
+chown $APP_USER:$APP_USER /var/www/$APP_USER/backend -R
+chown $APP_USER:$APP_USER /var/www/$APP_USER/admin -R
 
 # Get the server IP address
 SERVER_IP=$(hostname -I | awk '{print $1}')
