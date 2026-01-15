@@ -1,0 +1,167 @@
+#!/bin/bash
+DOMAIN_NAME=$1
+APP_USER=$2
+
+# Generate a random password
+DB_PASSWORD=$(openssl rand -base64 16)
+DB_USERNAME="${APP_USER}_user"
+DB_DATABASE="${APP_USER}_db"
+
+# Create backend Node js + postgresql and admin Node js only
+sudo useradd $APP_USER
+
+# Download the project
+cd /var/www/
+
+mkdir $APP_USER
+chown $APP_USER.$APP_USER /var/www/$APP_USER -R
+
+mkdir /home/$APP_USER
+chown $APP_USER.$APP_USER /home/$APP_USER -R
+
+# Create PostgreSQL user and database
+# Use underscores instead of dashes for PostgreSQL compatibility
+sudo -u postgres psql -c "CREATE USER \"$DB_USERNAME\" WITH PASSWORD '$DB_PASSWORD';"
+sudo -u postgres psql -c "CREATE DATABASE \"$DB_DATABASE\";"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE \"$DB_DATABASE\" TO \"$DB_USERNAME\";"
+
+## Backend Nginx config - NodeJS
+cat > /etc/nginx/sites-available/backend-dev.$DOMAIN_NAME <<EOF
+server {
+        index index.html index.htm;
+        server_name backend-dev.$DOMAIN_NAME;
+        access_log /var/log/nginx/backend-dev-$DOMAIN_NAME-access.log;
+        error_log /var/log/nginx/backend-dev-$DOMAIN_NAME-error.log;
+location / {
+  proxy_pass http://localhost:3000;
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade \$http_upgrade;
+  proxy_set_header Connection 'upgrade';
+  proxy_set_header Host \$host;
+  proxy_cache_bypass \$http_upgrade;
+}
+location ~ /\.ht {
+    deny all;
+}
+
+    listen 80;
+}
+EOF
+
+## Admin Nginx config - NodeJS
+cat > /etc/nginx/sites-available/admin-dev.$DOMAIN_NAME <<EOF
+server {
+        index index.html index.htm;
+        server_name admin-dev.$DOMAIN_NAME;
+        access_log /var/log/nginx/admin-dev-$DOMAIN_NAME-access.log;
+        error_log /var/log/nginx/admin-dev-$DOMAIN_NAME-error.log;
+location / {
+  proxy_pass http://localhost:3001;
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade \$http_upgrade;
+  proxy_set_header Connection 'upgrade';
+  proxy_set_header Host \$host;
+  proxy_cache_bypass \$http_upgrade;
+}
+location ~ /\.ht {
+    deny all;
+}
+
+    listen 80;
+}
+EOF
+
+## app Nginx config - NodeJS
+cat > /etc/nginx/sites-available/app-dev.$DOMAIN_NAME <<EOF
+server {
+        index index.html index.htm;
+        server_name app-dev.$DOMAIN_NAME;
+        access_log /var/log/nginx/app-dev-$DOMAIN_NAME-access.log;
+        error_log /var/log/nginx/app-dev-$DOMAIN_NAME-error.log;
+location / {
+  proxy_pass http://localhost:3002;
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade \$http_upgrade;
+  proxy_set_header Connection 'upgrade';
+  proxy_set_header Host \$host;
+  proxy_cache_bypass \$http_upgrade;
+}
+location ~ /\.ht {
+    deny all;
+}
+
+    listen 80;
+}
+EOF
+
+ln -s /etc/nginx/sites-available/backend-dev.$DOMAIN_NAME /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/admin-dev.$DOMAIN_NAME /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/app-dev.$DOMAIN_NAME /etc/nginx/sites-enabled/
+
+
+nginx -t
+
+# Create output directories
+mkdir -p /var/www/$APP_USER/backend
+mkdir -p /var/www/$APP_USER/admin
+mkdir -p /var/www/$APP_USER/app
+
+chown $APP_USER.$APP_USER /var/www/$APP_USER/backend -R
+chown $APP_USER.$APP_USER /var/www/$APP_USER/admin -R
+chown $APP_USER.$APP_USER /var/www/$APP_USER/app -R
+
+# Get the server IP address
+SERVER_IP=$(hostname -I | awk '{print $1}')
+
+# Print formatted information
+cat <<EOF
+
+/******************************************
+    Project: Dev-$DOMAIN_NAME - info
+*****************************************/
+
+/******************************************
+    Backend
+*****************************************/
+URL: https://backend-dev.$DOMAIN_NAME
+
+ssh $APP_USER@$SERVER_IP
+
+Root directory: /var/www/$APP_USER/backend
+
+## Postgresql DATABASE ## 
+DB_DATABASE: $DB_DATABASE
+DB_USERNAME: $DB_USERNAME
+DB_PASSWORD: $DB_PASSWORD
+
+--> Commands to start app
+pm2 --name $APP_USER-backend start yarn -- run start --port 3000
+
+Notes: 
+- NodeJS + Postgresql
+/******************************************
+    Admin
+*****************************************/
+
+URL: https://admin-dev.$DOMAIN_NAME
+
+Root directory: /var/www/$APP_USER/admin
+
+pm2 --name $APP_USER-admin start yarn -- run start --port 3001
+
+Notes: 
+- NodeJS
+
+/******************************************
+    app
+*****************************************/
+
+URL: https://app-dev.$DOMAIN_NAME
+
+Root directory: /var/www/$APP_USER/app
+
+pm2 --name $APP_USER-app start yarn -- run start --port 3002
+
+Notes: 
+- NodeJS
+EOF
